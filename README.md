@@ -1,97 +1,115 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+<h1 align="center">Semera Pay</h1>
 
-# Getting Started
+<p align="center"><em>Cashless payment for the bistro at seminars: an NFC card per guest, loaded with credit, paid with the iPhone. Works completely offline.</em></p>
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+[![Version](https://img.shields.io/badge/version-0.0.1-blue.svg)](./package.json)
+[![License](https://img.shields.io/badge/license-PolyForm%20Noncommercial-orange.svg)](./LICENSE)
+[![Platform](https://img.shields.io/badge/platform-iOS%2015.1%2B-lightgrey.svg?logo=apple)](./ios)
+[![React Native](https://img.shields.io/badge/React%20Native-0.84-61dafb.svg?logo=react&logoColor=black)](https://reactnative.dev)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6.svg?logo=typescript&logoColor=white)](./tsconfig.json)
+[![Offline](https://img.shields.io/badge/network-none-brightgreen.svg)](#-notes)
 
-## Step 1: Start Metro
+**Semera Pay** is an iOS app for the bistro at a seminar or camp. Nobody has to count out a few euros and hand back change for every drink: a guest hands over money once, it is loaded as credit onto an NFC card, and every purchase is paid by holding the card to the iPhone. What is left at the end is paid back, and when the credit runs out the card is loaded again, much like the NFC cards in a canteen.
+Nothing else: no accounts, no server, no network access.
 
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
+## ✨ Features
 
-To start the Metro dev server, run the following command from the root of your React Native project:
+* **Sale mode**
 
-```sh
-# Using npm
-npm start
+  * A product grid in categories (drinks, food, deposit), a cart and the total.
+  * Products with a deposit (*Pfand*) add the deposit automatically. The *Pfand −* product books a returned deposit as a negative amount.
+  * Pay by holding the card to the iPhone. A payment is refused when the credit is not enough: the balance never falls below 0.
 
-# OR using Yarn
-yarn start
+* **Top-up mode**
+
+  * Preset amounts (1, 2, 5, 10, 20 and 50 €) that add up, then hold the card to the iPhone.
+  * A card the app has not seen before is created on its first top-up, and its owner's name is asked for.
+
+* **Cards**
+
+  * A card is identified by its NFC tag ID. Each card has an optional name (rename by tapping) and a balance.
+  * Resetting a card sets the balance to 0 and removes the name, and is noted in the history.
+
+* **Management** (*Verwaltung*)
+
+  * Totals for sales, topped-up credit and credit on cards.
+  * Tabs for **cards**, **history** (every booking, newest first), **products** and **backup**.
+  * **Products** can be added, edited and deleted (name, price, category, deposit). The defaults from the configuration can be restored.
+
+* **Backup**
+
+  * Create a backup file (cards, history and products) and share it with the iOS share sheet.
+  * Export **cards** or **history** as CSV for Excel or Numbers (semicolon-separated, amounts with a decimal comma).
+  * Restore from a backup. The current state is saved first, so a restore can be undone.
+
+* **Small and calm**
+
+  * Dark interface with haptic feedback, in German.
+  * Works without a network: the app contains no network code.
+
+## 📦 Project Structure
+
+```
+semera-pay/
+├── App.tsx                       # Sale and top-up screen, NFC action, cart
+├── src/
+│   ├── components/
+│   │   ├── ManageModal.tsx       # Management: cards, history, products, backup
+│   │   ├── ProductsPanel.tsx     # Edit the product list
+│   │   └── BackupPanel.tsx       # Backup, CSV export, restore
+│   ├── services/
+│   │   ├── NfcService.js         # Reads the NFC tag (react-native-nfc-manager)
+│   │   ├── AccountService.ts     # Cards, balances, bookings (stored on the device)
+│   │   ├── ProductService.ts     # Product list (stored on the device)
+│   │   └── BackupService.ts      # Backup files, CSV export, restore
+│   ├── constants/config.js       # Theme, currency, top-up amounts, categories, default products
+│   └── utils/                    # Money formatting, name prompt
+├── ios/                          # Xcode project (SemeraPay.xcworkspace), NFC entitlement
+├── patches/                      # patch-package patch for react-native-nfc-manager
+├── __tests__/                    # Jest
+└── README.md
 ```
 
-## Step 2: Build and run your app
+## 🧠 How it works
 
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
+| Piece | Where |
+| --- | --- |
+| Hold-to-scan with Core NFC: reads the **tag ID** of the card. The patch for `react-native-nfc-manager` skips the NDEF read so the scan sheet closes immediately. | `src/services/NfcService.js`, `patches/` |
+| Cards and bookings (`sale`, `topup`, `reset`) are saved in the app's local storage, keyed by the card's tag ID. Writes are queued so two bookings cannot overwrite each other, and a booking never takes the balance below 0. | `src/services/AccountService.ts` |
+| Products, categories, top-up amounts and the currency come from the configuration; edits to the product list are saved on the device. | `src/constants/config.js`, `src/services/ProductService.ts` |
+| Backups are JSON files in the app's documents folder (`semera-pay-backup-…`); a safety copy (`semera-pay-vorher-…`) is made before every restore. | `src/services/BackupService.ts` |
 
-### Android
+## ⚙️ Development
 
-```sh
-# Using npm
-npm run android
+Node 22.11 or newer, Xcode and CocoaPods. NFC needs a real iPhone, the simulator cannot scan cards.
 
-# OR using Yarn
-yarn android
+```bash
+npm install                 # also applies the patch in patches/
+bundle install              # first time only: installs CocoaPods
+cd ios && bundle exec pod install && cd ..
+npm start                   # Metro
+npm run ios                 # build and run (choose your iPhone in Xcode for NFC)
 ```
 
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
+```bash
+npm test                    # Jest
+npm run lint                # ESLint
 ```
 
-Then, and every time you update your native dependencies, run:
+## 🛠️ Build
 
-```sh
-bundle exec pod install
-```
+Open `ios/SemeraPay.xcworkspace` in Xcode, select a signing team, and archive for the App Store.
 
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
+## 🔒 Notes
 
-```sh
-# Using npm
-npm run ios
+* **Requirements:** an iPhone with NFC, iOS 15.1 or newer, and NFC cards that the iPhone can read. The app asks for NFC access (*NFCReaderUsageDescription*).
+* **Where the data lives:** cards, balances, history and products are stored on the iPhone that runs the app, in its local storage, and not on the cards. Keep the backups: a lost phone or a deleted app loses the balances.
+* **Offline:** the app makes no network requests and has no accounts.
+* **Platform:** the project is built for iOS. The `android/` folder comes from the React Native template.
+* **Configuration:** the bistro's products, prices, categories and top-up amounts are in `src/constants/config.js`.
 
-# OR using Yarn
-yarn ios
-```
+## 👤 Author
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
-
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
-
-## Step 3: Modify your app
-
-Now that you have successfully run the app, let's make changes!
-
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
-
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
-
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
-
-## Congratulations! :tada:
-
-You've successfully run and modified your React Native App. :partying_face:
-
-### Now what?
-
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
-
-# Troubleshooting
-
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
-
-# Learn More
-
-To learn more about React Native, take a look at the following resources:
-
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+* **Jan Schulz-Nigmann / Semera**
+* Copyright © 2026 Jan Schulz-Nigmann / Semera
+* License: [PolyForm Noncommercial 1.0.0](./LICENSE) plus an explicit permission for non-profit organizations. Free for noncommercial use and for non-profits of any kind (associations, clubs, churches, charities, schools). **Commercial use needs a separate license** from Semera.
