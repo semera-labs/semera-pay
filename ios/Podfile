@@ -14,7 +14,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'SemeraPOS' do
+target 'SemeraPay' do
   config = use_native_modules!
 
   use_react_native!(
@@ -30,5 +30,15 @@ target 'SemeraPOS' do
       :mac_catalyst_enabled => false,
       # :ccache_enabled => true
     )
+
+    # The sandbox blocks pod script phases that copy generated module maps (e.g. RCTSwiftUI)
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+    end
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['ENABLE_USER_SCRIPT_SANDBOXING'] = 'NO'
+      end
+    end
   end
 end

@@ -1,0 +1,33 @@
+diff --git a/node_modules/react-native-nfc-manager/ios/NfcManager.m b/node_modules/react-native-nfc-manager/ios/NfcManager.m
+index 5869623..17b47e3 100755
+--- a/node_modules/react-native-nfc-manager/ios/NfcManager.m
++++ b/node_modules/react-native-nfc-manager/ios/NfcManager.m
+@@ -406,27 +406,16 @@ + (BOOL)requiresMainQueueSetup
+ {
+     if (@available(iOS 13.0, *)) {
+         NSMutableDictionary* rnTag = @{}.mutableCopy;
+-        id<NFCNDEFTag> ndefTag = nil;
+ 
+         if (tagSession != nil) {
+             if (tagSession.connectedTag) {
+                 rnTag = [self getRNTag:tagSession.connectedTag].mutableCopy;
+-                ndefTag = [self getNDEFTagHandle:tagSession.connectedTag];
+             }
+         } else {
+             callback(@[@"No session available", [NSNull null]]);
+         }
+ 
+-        if (ndefTag) {
+-            [ndefTag readNDEFWithCompletionHandler:^(NFCNDEFMessage *ndefMessage, NSError *error) {
+-                if (!error) {
+-                    [rnTag setObject:[NfcManager convertNdefMessage:ndefMessage] forKey:@"ndefMessage"];
+-                }
+-                callback(@[[NSNull null], rnTag]);
+-            }];
+-            return;
+-        }
+-        
++        // Semera Pay only needs the tag id: skip the NDEF read so the scan sheet can close immediately
+         callback(@[[NSNull null], rnTag]);
+     } else {
+         callback(@[@"Not support in this device", [NSNull null]]);
