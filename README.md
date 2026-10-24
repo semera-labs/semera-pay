@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="./docs/icon.png" alt="Semera Pay icon" width="80"/>
+</p>
+
 <h1 align="center">Semera Pay</h1>
 
 <p align="center"><em>Cashless payment for the bistro at seminars: an NFC card per guest, loaded with credit, paid with the iPhone. Works completely offline.</em></p>
